@@ -62,7 +62,7 @@ FROM (
 )
 WHERE rn = 1
 )
-SELECT
+SELECT DISTINCT
     a.order_id,
     u.user_id,
     u.user_name,
