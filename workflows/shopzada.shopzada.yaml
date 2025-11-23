@@ -1,0 +1,109 @@
+id: shopzada
+namespace: shopzada
+
+tasks:
+  - id: dbt
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: clone_repository
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/FRADMGit/ShopZadaTest
+        branch: main
+
+      - id: prepare_for_staging
+        type: io.kestra.plugin.scripts.python.Script
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: python:3.11-slim
+        script: |
+          import subprocess
+          subprocess.check_call([ "pip", "install", "pandas", "openpyxl", "lxml", "html5lib", "pyarrow", "fastparquet" ])
+          import pandas as pd
+          import os
+
+          files = os.listdir("seeds")
+          tables = {'user_job':[], 'user_data':[], 'staff_data':[], 'order_delays':[], 'order_data':[], 'order_delays':[], 'product_list':[], 'merchant_data':[], 'campaign_data':[], 'user_credit_card':[], 'line_item_data_prices':[], 'line_item_data_products':[], 'order_with_merchant_data':[], 'transactional_campaign_data':[]}
+
+          for table in tables:
+            while files:
+              filename = files.pop()
+              for table in tables:
+                if filename.startswith(table):
+                  tables[table] += [filename]
+
+          def read(file):
+            file = os.path.join("seeds", file)
+            if 'csv' in file:
+                df = pd.read_csv(file, sep=None, engine='python')
+            elif 'json' in file:
+                df = pd.read_json(file)
+            elif 'pickle' in file:
+                df = pd.read_pickle(file)
+            elif 'xlsx' in file:
+                df = pd.read_excel(file)
+            elif 'html' in file:
+                df = pd.read_html(file)[0]
+            elif 'parquet' in file:
+                df = pd.read_parquet(file)
+            return df
+
+          def integrate(table):
+            df = read(tables[table][0])
+            if len(tables[table]) > 1:
+              for i in range(1, len(tables[table])):
+                df = pd.concat([df, read(tables[table][i])], ignore_index=True)
+            if table == "user_credit_card":
+                df['credit_card_number'] = df['credit_card_number'].apply(lambda x: f'"{x}"')
+              # export
+            csv_path = os.path.join(os.getcwd(), "seeds", f"clean_{table}.csv")
+            df.to_csv(csv_path, index=False)
+            print(f"Exported {table}.csv")
+
+          for table in tables:
+              integrate(table)
+    
+      - id: dbt_build
+        type: io.kestra.plugin.dbt.cli.DbtCLI
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: ghcr.io/kestra-io/dbt-duckdb:latest
+        commands:
+          - dbt deps
+          - dbt build
+        profiles: |
+          ShopZada:
+            outputs:
+              dev:
+                type: duckdb
+                path: dbt.duckdb
+                fixed_retries: 1
+                threads: 16
+                timeout_seconds: 300
+            target: dev
+
+      - id: export
+        type: io.kestra.plugin.scripts.python.Script
+        outputFiles:
+          - "*.csv"
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: ghcr.io/kestra-io/duckdb:latest
+        script: |
+          import duckdb
+          import pandas as pd
+
+          conn = duckdb.connect(database='dbt.duckdb', read_only=False)
+
+          tables_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main';"
+
+          tables = conn.execute(tables_query).fetchall()
+
+          # Export each table to CSV, only if the table name ends with 'dim' or 'fact'
+          for table_name in tables:
+              table_name = table_name[0]
+              if table_name.endswith('dim') or table_name.endswith('fact'):
+                  query = f"SELECT * FROM {table_name}"
+                  df = conn.execute(query).fetchdf()
+                  df.to_csv(f"{table_name}.csv", index=False)
+
+          conn.close()
