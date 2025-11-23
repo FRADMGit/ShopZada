@@ -9,3 +9,4 @@ SELECT DISTINCT
     REGEXP_REPLACE(contact_number, '[^0-9]', '', 'g') AS merchant_contact_number
 FROM
     {{ ref('clean_merchant_data') }}
+WHERE merchant_id IS NOT NULL
