@@ -2,6 +2,7 @@ WITH affliations AS (
 SELECT
     a.order_id,
     b.user_id,
+    b.order_arrival_days,
     merchant_id,
     staff_id,
     CASE campaign_availed
@@ -72,6 +73,7 @@ SELECT DISTINCT
     s.staff_name,
     a.campaign_id,
     a.order_transaction_date,
+    a.order_arrival_days,
     d.order_delay_days
 FROM affliations a
 JOIN correct_user u ON a.order_id = u.order_id
