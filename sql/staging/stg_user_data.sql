@@ -1,4 +1,4 @@
-SELECT
+SELECT DISTINCT
     user_id,
     creation_date AS user_creation_datetime,
     name AS user_name,
