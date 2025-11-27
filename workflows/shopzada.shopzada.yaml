@@ -7,7 +7,7 @@ tasks:
     tasks:
       - id: clone_repository
         type: io.kestra.plugin.git.Clone
-        url: https://github.com/FRADMGit/ShopZadaTest
+        url: https://github.com/FRADMGit/ShopZada
         branch: main
 
       - id: prepare_for_staging
@@ -57,7 +57,6 @@ tasks:
               # export
             csv_path = os.path.join(os.getcwd(), "seeds", f"clean_{table}.csv")
             df.to_csv(csv_path, index=False)
-            print(f"Exported {table}.csv")
 
           for table in tables:
               integrate(table)
