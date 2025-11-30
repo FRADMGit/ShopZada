@@ -1,0 +1,275 @@
+id: analytical_views
+namespace: shopzada
+
+tasks:
+  - id: user_view
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    username: kestra
+    password: k3str4
+    sql: |
+        DROP VIEW IF EXISTS user_view;
+
+        CREATE VIEW user_view AS
+        WITH user_orders AS (
+            SELECT
+                o.user_id,
+                u.user_name,
+                u.user_country,
+                u.user_device_address,
+                u.user_type,
+                u.credit_card_holder_name,
+                u.issuing_bank,
+                u.user_job,
+                u.user_job_level,
+                o.order_id,
+                l.line_quantity,
+                l.line_price,
+                o.order_transaction_date
+            FROM line_fact l
+            JOIN order_dim o ON l.order_id = o.order_id
+            JOIN user_dim u ON o.user_id = u.user_id
+        ),
+        aggregated AS (
+            SELECT
+                user_id,
+                user_name,
+                user_country,
+                user_device_address,
+                user_type,
+                credit_card_holder_name,
+                issuing_bank,
+                user_job,
+                user_job_level,
+                COUNT(DISTINCT order_id) AS total_orders,
+                SUM(line_quantity) AS total_items_bought,
+                SUM(line_quantity * line_price) AS total_spend,
+                MIN(order_transaction_date) AS first_order_date,
+                MAX(order_transaction_date) AS last_order_date
+            FROM user_orders
+            GROUP BY
+                user_id,
+                user_name,
+                user_country,
+                user_device_address,
+                user_type,
+                credit_card_holder_name,
+                issuing_bank,
+                user_job,
+                user_job_level
+        )
+        SELECT *
+        FROM aggregated
+        ORDER BY total_spend DESC;
+
+  - id: product_view
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    username: kestra
+    password: k3str4
+    sql: |
+        DROP VIEW IF EXISTS product_view;
+
+        CREATE VIEW product_view AS
+        WITH exploded AS (
+            -- assign each product to all its true categories
+            SELECT product_id, product_name, 'toys' AS category FROM product_dim WHERE toys
+            UNION ALL
+            SELECT product_id, product_name, 'entertainment' AS category FROM product_dim WHERE entertainment
+            UNION ALL
+            SELECT product_id, product_name, 'breakfast' AS category FROM product_dim WHERE breakfast
+            UNION ALL
+            SELECT product_id, product_name, 'lunch' AS category FROM product_dim WHERE lunch
+            UNION ALL
+            SELECT product_id, product_name, 'dinner' AS category FROM product_dim WHERE dinner
+            UNION ALL
+            SELECT product_id, product_name, 'accessories' AS category FROM product_dim WHERE accessories
+            UNION ALL
+            SELECT product_id, product_name, 'kitchenware' AS category FROM product_dim WHERE kitchenware
+            UNION ALL
+            SELECT product_id, product_name, 'grocery' AS category FROM product_dim WHERE grocery
+            UNION ALL
+            SELECT product_id, product_name, 'apparel' AS category FROM product_dim WHERE apparel
+            UNION ALL
+            SELECT product_id, product_name, 'furniture' AS category FROM product_dim WHERE furniture
+            UNION ALL
+            SELECT product_id, product_name, 'health' AS category FROM product_dim WHERE health
+            UNION ALL
+            SELECT product_id, product_name, 'hygiene' AS category FROM product_dim WHERE hygiene
+            UNION ALL
+            SELECT product_id, product_name, 'stationary' AS category FROM product_dim WHERE stationary
+            UNION ALL
+            SELECT product_id, product_name, 'tools' AS category FROM product_dim WHERE tools
+            UNION ALL
+            SELECT product_id, product_name, 'jewelry' AS category FROM product_dim WHERE jewelry
+            UNION ALL
+            SELECT product_id, product_name, 'technology' AS category FROM product_dim WHERE technology
+            UNION ALL
+            SELECT product_id, product_name, 'electronics' AS category FROM product_dim WHERE electronics
+            UNION ALL
+            SELECT product_id, product_name, 'sports' AS category FROM product_dim WHERE sports
+            UNION ALL
+            SELECT product_id, product_name, 'cosmetic' AS category FROM product_dim WHERE cosmetic
+            UNION ALL
+            SELECT product_id, product_name, 'music' AS category FROM product_dim WHERE music
+            UNION ALL
+            SELECT product_id, product_name, 'cleaning' AS category FROM product_dim WHERE cleaning
+            UNION ALL
+            SELECT product_id, product_name, 'appliances' AS category FROM product_dim WHERE appliances
+            -- catch-all for products in no category or flagged as others
+            UNION ALL
+            SELECT product_id, product_name, 'others' AS category
+            FROM product_dim
+            WHERE NOT (toys OR entertainment OR breakfast OR lunch OR dinner OR accessories OR kitchenware OR grocery OR apparel OR furniture OR health OR hygiene OR stationary OR tools OR jewelry OR technology OR electronics OR sports OR cosmetic OR music OR cleaning OR appliances OR others)
+            OR others
+        ),
+        sales AS (
+            SELECT
+                e.product_id,
+                e.category,
+                l.order_id,
+                SUM(l.line_quantity) AS total_quantity_sold,
+                SUM(l.line_quantity * l.line_price) AS total_sales
+            FROM exploded e
+            LEFT JOIN line_fact l
+                ON e.product_id = l.product_id
+            GROUP BY e.category, e.product_id, l.order_id
+        ),
+        category_agg AS (
+            SELECT
+                category,
+                COUNT(DISTINCT product_id) AS products_under_category,
+                SUM(total_sales) AS total_sales,
+                SUM(total_quantity_sold) AS total_quantity_sold,
+                COUNT(DISTINCT order_id) AS total_orders
+            FROM sales
+            GROUP BY category
+        ),
+        grand_total AS (
+            SELECT SUM(total_sales) AS overall_sales FROM category_agg
+        )
+        SELECT
+            c.*,
+            ROUND(c.total_sales / g.overall_sales, 4) AS ratio
+        FROM category_agg c
+        CROSS JOIN grand_total g
+        ORDER BY total_sales DESC;
+
+  - id: merchant_view
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    username: kestra
+    password: k3str4
+    sql: |
+        DROP VIEW IF EXISTS merchant_view;
+
+        CREATE VIEW merchant_view AS
+        WITH order_metrics AS (
+            SELECT
+                m.merchant_id,
+                m.merchant_name,
+                m.merchant_country,
+                COUNT(DISTINCT o.order_id) AS total_orders,
+                SUM(l.line_quantity * l.line_price) AS total_sales,
+                AVG(o.order_arrival_days) AS average_arrival_days,
+                COUNT(DISTINCT o.user_id) AS total_customers
+            FROM order_dim o
+            JOIN merchant_dim m
+                ON o.merchant_id = m.merchant_id
+            AND o.merchant_name = m.merchant_name
+            JOIN line_fact l
+                ON o.order_id = l.order_id   -- ensures only orders with sales are counted
+            GROUP BY m.merchant_id, m.merchant_name, m.merchant_country
+        )
+        SELECT *
+        FROM order_metrics
+        ORDER BY total_orders DESC;
+
+  - id: staff_view
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    username: kestra
+    password: k3str4
+    sql: |
+        DROP VIEW IF EXISTS staff_view;
+
+        CREATE VIEW staff_view AS
+        WITH staff_orders AS (
+            SELECT
+                s.staff_id,
+                s.staff_name,
+                s.staff_job_level,
+                o.order_id,
+                o.user_id,
+                l.line_quantity,
+                l.line_price,
+                o.order_delay_days
+            FROM line_fact l
+            JOIN order_dim o
+                ON l.order_id = o.order_id  -- only orders with lines
+            JOIN staff_dim s
+                ON o.staff_id = s.staff_id
+            AND o.staff_name = s.staff_name
+        )
+        SELECT
+            staff_id,
+            staff_name,
+            staff_job_level,
+            COUNT(DISTINCT order_id) AS total_orders,
+            SUM(line_quantity) AS total_items_sold,
+            SUM(line_quantity * line_price) AS total_sales,
+            AVG(order_delay_days) AS average_order_delay_days,
+            COUNT(DISTINCT user_id) AS distinct_customers
+        FROM staff_orders
+        GROUP BY staff_id, staff_name, staff_job_level
+        ORDER BY total_orders DESC;
+
+  - id: campaign_view
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    username: kestra
+    password: k3str4
+    sql: |
+        DROP VIEW IF EXISTS campaign_view;
+
+        CREATE VIEW campaign_view AS
+        WITH campaign_orders AS (
+            SELECT
+                COALESCE(c.campaign_id, 'CAMPAIGN0') AS campaign_id,
+                COALESCE(c.campaign_name, 'NO CAMPAIGN') AS campaign_name,
+                COALESCE(c.campaign_discount, 0) AS campaign_discount,
+                o.order_id,
+                o.user_id,
+                l.line_quantity,
+                l.line_price,
+                o.order_transaction_date
+            FROM order_dim o
+            JOIN line_fact l
+                ON o.order_id = l.order_id
+            LEFT JOIN campaign_dim c
+                ON o.campaign_id = c.campaign_id
+        ),
+        aggregated AS (
+            SELECT
+                campaign_id,
+                campaign_name,
+                ROUND(campaign_discount, 2) AS campaign_discount,
+                COUNT(DISTINCT order_id) AS total_orders,
+                SUM(line_quantity) AS total_items_sold,
+                ROUND(SUM(line_quantity * line_price), 2) AS total_sales,
+                COUNT(DISTINCT user_id) AS distinct_customers,
+                MIN(order_transaction_date) AS first_order_date,
+                MAX(order_transaction_date) AS last_order_date,
+                ROUND(SUM(line_quantity * line_price * (campaign_discount / NULLIF(1 - campaign_discount, 0))), 2) AS discount_expense
+            FROM campaign_orders
+            GROUP BY
+                campaign_id,
+                campaign_name,
+                campaign_discount
+        )
+        SELECT *
+        FROM aggregated
+        ORDER BY total_sales DESC;
+
+
+
