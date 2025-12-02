@@ -1,0 +1,200 @@
+id: elt
+namespace: shopzada
+
+tasks:
+  - id: elt
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+    - id: extract
+      type: io.kestra.plugin.scripts.python.Commands
+      namespaceFiles:
+        enabled: True
+      outputFiles:
+        - user_job.csv
+        - user_data.csv
+        - staff_data.csv
+        - order_data.csv
+        - order_delays.csv
+        - product_list.csv
+        - merchant_data.csv
+        - campaign_data.csv
+        - user_credit_card.csv
+        - line_item_data_prices.csv
+        - line_item_data_products.csv
+        - order_with_merchant_data.csv
+        - transactional_campaign_data.csv
+      beforeCommands:
+          - pip install pandas openpyxl lxml html5lib pyarrow fastparquet
+      commands:
+        - python extract.py
+        
+    - id: tables_for_extract
+      type: io.kestra.plugin.jdbc.postgresql.Queries
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      sql: "{{ read('nsfile:///tables_for_extract.sql') }}"
+
+    - id: load_user_job
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['user_job.csv'] }}"
+      table: user_job
+      header: true
+      delimiter: ","
+
+    - id: load_user_data
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['user_data.csv'] }}"
+      table: user_data
+      header: true
+      delimiter: ","
+
+    - id: load_order_data
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['order_data.csv'] }}"
+      table: order_data
+      header: true
+      delimiter: ","
+
+    - id: load_staff_data
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['staff_data.csv'] }}"
+      table: staff_data
+      header: true
+      delimiter: ","
+
+    - id: load_order_delays
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['order_delays.csv'] }}"
+      table: order_delays
+      header: true
+      delimiter: ","
+
+    - id: load_product_list
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['product_list.csv'] }}"
+      table: product_list
+      header: true
+      delimiter: ","
+
+    - id: load_campaign_data
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['campaign_data.csv'] }}"
+      table: campaign_data
+      header: true
+      delimiter: ","
+
+    - id: load_merchant_data
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['merchant_data.csv'] }}"
+      table: merchant_data
+      header: true
+      delimiter: ","
+
+    - id: load_user_credit_card
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['user_credit_card.csv'] }}"
+      table: user_credit_card
+      header: true
+      delimiter: ","
+
+    - id: load_line_item_data_prices
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['line_item_data_prices.csv'] }}"
+      table: line_item_data_prices
+      header: true
+      delimiter: ","
+
+    - id: load_line_item_data_products
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['line_item_data_products.csv'] }}"
+      table: line_item_data_products
+      header: true
+      delimiter: ","
+
+    - id: load_order_with_merchant_data
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['order_with_merchant_data.csv'] }}"
+      table: order_with_merchant_data
+      header: true
+      delimiter: ","
+
+    - id: load_transactional_campaign_data
+      type: io.kestra.plugin.jdbc.postgresql.CopyIn
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      format: CSV
+      from: "{{ outputs.extract.outputFiles['transactional_campaign_data.csv'] }}"
+      table: transactional_campaign_data
+      header: true
+      delimiter: ","
+
+    - id: transform
+      type: io.kestra.plugin.jdbc.postgresql.Queries
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      sql: "{{ read('nsfile:///transform.sql') }}"
+
+    - id: schema
+      type: io.kestra.plugin.jdbc.postgresql.Queries
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      sql: "{{ read('nsfile:///schema.sql') }}"
+
+    - id: view
+      type: io.kestra.plugin.jdbc.postgresql.Queries
+      url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+      username: kestra
+      password: k3str4
+      sql: "{{ read('nsfile:///view.sql') }}"
