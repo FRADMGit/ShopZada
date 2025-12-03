@@ -31,15 +31,17 @@ Datasets/
 # HOW TO OPEN DATABASE IN PGADMIN4 [OPTIONAL]
 1. Make sure you have run `docker compose up -d`  
 2. In your browser, open `localhost:5050`  
-3. Right-click on Servers → Register → Server…  
+      Username: `admin@shopzada.com `  
+      Password: `PgAdminPassword123`  
+4. Right-click on Servers → Register → Server…  
    - **General:** choose any name  
    - **Connection:**  
-     Host name/address: `postgres`  
-     Port: `5432`  
-     Maintenance Database: `kestra`  
-     Username: `kestra`  
-     Password: `k3str4`  
-4. Save
+      Host name/address: `postgres`  
+      Port: `5432`
+      Maintenance Database: `kestra`  
+      Username: `kestra`  
+      Password: `k3str4`  
+5. Save
 
 ---
 
