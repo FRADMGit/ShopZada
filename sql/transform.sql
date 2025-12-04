@@ -37,8 +37,9 @@
   ORDER BY line_id ASC;
 -- clean merchant data
   DROP TABLE IF EXISTS clean_merchant_data CASCADE;
+
   CREATE TABLE clean_merchant_data AS
-  SELECT DISTINCT
+  SELECT
       merchant_id,
       creation_date AS merchant_creation_datetime,
       name AS merchant_name,
@@ -47,8 +48,14 @@
       city AS merchant_city,
       country AS merchant_country,
       REGEXP_REPLACE(contact_number, '[^0-9]', '', 'g') AS merchant_contact_number
-  FROM merchant_data
-  WHERE merchant_id IS NOT NULL;
+  FROM (
+      SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY creation_date DESC) AS rn
+      FROM merchant_data
+      WHERE merchant_id IS NOT NULL
+  ) sub
+  WHERE rn = 1;
+
 -- clean order data
   DROP TABLE IF EXISTS clean_order_data CASCADE;
   CREATE TABLE clean_order_data AS
@@ -116,8 +123,9 @@
     AND price IS NOT NULL;
 -- clean staff data
   DROP TABLE IF EXISTS clean_staff_data CASCADE;
+
   CREATE TABLE clean_staff_data AS
-  SELECT DISTINCT
+  SELECT
       staff_id,
       name AS staff_name,
       job_level AS staff_job_level,
@@ -127,9 +135,15 @@
       country AS staff_country,
       REGEXP_REPLACE(contact_number, '[^0-9]', '', 'g') AS staff_contact_number,
       creation_date AS staff_creation_datetime
-  FROM staff_data
-  WHERE staff_id IS NOT NULL
-    AND name IS NOT NULL;
+  FROM (
+      SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY staff_id ORDER BY creation_date DESC) AS rn
+      FROM staff_data
+      WHERE staff_id IS NOT NULL
+        AND name IS NOT NULL
+  ) sub
+  WHERE rn = 1;
+
 -- clean transactional campaign data
   DROP TABLE IF EXISTS clean_transactional_campaign_data CASCADE;
   CREATE TABLE clean_transactional_campaign_data AS
@@ -146,8 +160,9 @@
   SELECT DISTINCT * FROM user_credit_card;
 -- clean user data
   DROP TABLE IF EXISTS clean_user_data CASCADE;
+
   CREATE TABLE clean_user_data AS
-  SELECT DISTINCT
+  SELECT 
       "user_id",
       creation_date AS user_creation_datetime,
       name AS "user_name",
@@ -155,13 +170,19 @@
       state AS user_state,
       city AS user_city,
       country AS user_country,
-      birthdate  AS user_birth_datetime,
+      birthdate AS user_birth_datetime,
       gender AS user_gender,
       device_address AS user_device_address,
       user_type
-  FROM user_data
-  WHERE "user_id" IS NOT NULL
-    AND name IS NOT NULL;
+  FROM (
+      SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY creation_date DESC) AS rn
+      FROM user_data
+      WHERE "user_id" IS NOT NULL
+        AND name IS NOT NULL
+  ) sub
+  WHERE rn = 1;
+
 -- clean user job
   DROP TABLE IF EXISTS clean_user_job CASCADE;
   CREATE TABLE clean_user_job AS
