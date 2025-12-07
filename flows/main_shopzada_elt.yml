@@ -16,8 +16,12 @@ tasks:
 
   - id: extract
     type: io.kestra.plugin.scripts.python.Commands
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      image: shopzada.app:latest
+      pullPolicy: NEVER
     namespaceFiles:
-      enabled: true
+      enabled: True
     inputFiles:
       zipfile: "{{ outputs.download_dataset.uri }}"
     outputFiles:
@@ -27,14 +31,14 @@ tasks:
 
   - id: loading_tables
     type: io.kestra.plugin.jdbc.postgresql.Queries
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     sql: "{{ read('loading_tables.sql') }}"
 
   - id: load_user_job
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -45,7 +49,7 @@ tasks:
 
   - id: load_user_data
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -56,7 +60,7 @@ tasks:
 
   - id: load_order_data
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -67,7 +71,7 @@ tasks:
 
   - id: load_staff_data
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -78,7 +82,7 @@ tasks:
 
   - id: load_order_delays
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -89,7 +93,7 @@ tasks:
 
   - id: load_product_list
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -100,7 +104,7 @@ tasks:
 
   - id: load_campaign_data
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -111,7 +115,7 @@ tasks:
 
   - id: load_merchant_data
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -122,7 +126,7 @@ tasks:
 
   - id: load_user_credit_card
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -133,7 +137,7 @@ tasks:
 
   - id: load_line_item_data_prices
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -144,7 +148,7 @@ tasks:
 
   - id: load_line_item_data_products
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -155,7 +159,7 @@ tasks:
 
   - id: load_order_with_merchant_data
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -166,7 +170,7 @@ tasks:
 
   - id: load_transactional_campaign_data
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     format: CSV
@@ -177,28 +181,35 @@ tasks:
 
   - id: clean_dims
     type: io.kestra.plugin.jdbc.postgresql.Queries
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     sql: "{{ read('clean_dims.sql') }}"
 
   - id: clean_facts
     type: io.kestra.plugin.jdbc.postgresql.Queries
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     sql: "{{ read('clean_facts.sql') }}"
 
   - id: schema_dims
     type: io.kestra.plugin.jdbc.postgresql.Queries
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     sql: "{{ read('schema_dims.sql') }}"
 
   - id: schema_facts
     type: io.kestra.plugin.jdbc.postgresql.Queries
-    url: jdbc:postgresql://shopzada-postgres-1:5432/kestra
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
     username: kestra
     password: k3str4
     sql: "{{ read('schema_facts.sql') }}"
+
+  - id: create_views
+    type: io.kestra.plugin.jdbc.postgresql.Queries
+    url: jdbc:postgresql://dwh_finalproject_3dsa_group_6-postgres-1:5432/kestra
+    username: kestra
+    password: k3str4
+    sql: "{{ read('view.sql') }}"
