@@ -5,7 +5,7 @@
         SELECT
             od.order_id,
             od.user_id,
-            CAST(od.order_transaction_date AS DATE) AS order_transaction_date,
+            od.order_transaction_date::DATE AS order_transaction_date,
             od.order_arrival_days,
             odl.order_delay_days,
             msm.merchant_id,
@@ -56,7 +56,7 @@
                 WHERE cs2.staff_id = msm.staff_id
                 AND cs2.staff_creation_datetime <= od.order_transaction_date::DATE
             )
-		WHERE od.order_id IS NOT NULL AND order_transaction_date ~ '^\d{8}$'
+		WHERE od.order_id IS NOT NULL AND TO_DATE(order_transaction_date, 'YYYY-MM-DD') IS NOT NULL
     )
     SELECT
         order_id,
@@ -81,6 +81,7 @@
         FROM line_item_data_prices
         FULL JOIN line_item_data_products USING(line_id, order_id)
         JOIN clean_product USING(product_id, product_name)
+
 
 
 
