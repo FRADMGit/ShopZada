@@ -68,10 +68,10 @@
       merchant_city,
       merchant_country,
       REGEXP_REPLACE(merchant_contact_number, '[^0-9]', '', 'g') AS merchant_contact_number,
-      TO_TIMESTAMP(merchant_creation_datetime, 'YYYY-MM-DD HH24:MI:SS') AS merchant_creation_datetime
+      merchant_creation_datetime::TIMESTAMP AS merchant_creation_datetime
     FROM merchant_data
     WHERE merchant_id IS NOT NULL
-	AND merchant_creation_datetime ~ '^\d{8}$'
+	AND TO_TIMESTAMP(merchant_creation_datetime, 'YYYY-MM-DD HH24:MI:SS') IS NOT NULL
     ORDER BY merchant_creation_datetime
   )
   SELECT 'MERCHANT' || LPAD(CAST((ROW_NUMBER() OVER()) AS TEXT), 5, '0') AS merchant_pk, *
@@ -90,8 +90,8 @@
 	  staff_city,
 	  staff_country,
 	  staff_contact_number,
-	  TO_TIMESTAMP(staff_creation_datetime, 'YYYY-MM-DD HH24:MI:SS') AS staff_creation_datetime
-  FROM (SELECT DISTINCT * FROM staff_data WHERE staff_id IS NOT NULL AND staff_creation_datetime ~ '^\d{8}$'
+	  staff_creation_datetime::TIMESTAMP AS staff_creation_datetime
+  FROM (SELECT DISTINCT * FROM staff_data WHERE staff_id IS NOT NULL AND TO_TIMESTAMP(staff_creation_datetime, 'YYYY-MM-DD HH24:MI:SS') IS NOT NULL
   ORDER BY staff_creation_datetime);
 
 -- clean_user
@@ -123,12 +123,12 @@
 	'USER' || LPAD(CAST((ROW_NUMBER() OVER()) AS TEXT), 5, '0') AS user_pk,
 	user_id,
 	user_name,
-	TO_TIMESTAMP(user_creation_datetime, 'YYYY-MM-DD HH24:MI:SS') AS user_creation_datetime,
+	user_creation_datetime::TIMESTAMP AS user_creation_datetime,
 	user_street,
 	user_state,
 	user_city,
 	user_country,
-	TO_TIMESTAMP(user_birthdate, 'YYYY-MM-DD HH24:MI:SS') AS user_birthdate,
+	user_birthdate::TIMESTAMP AS user_birthdate,
 	user_gender,
 	user_device_address,
 	user_type,
@@ -137,7 +137,10 @@
 	user_credit_card_number,
 	user_issuing_bank
   FROM users
-  where user_id IS NOT NULL AND user_creation_datetime ~ '^\d{8}$' AND user_birthdate ~ '^\d{8}$'
+  where user_id IS NOT NULL
+  AND TO_TIMESTAMP(user_creation_datetime, 'YYYY-MM-DD HH24:MI:SS') IS NOT NULL
+  AND TO_TIMESTAMP(user_birthdate, 'YYYY-MM-DD HH24:MI:SS') IS NOT NULL
+
 
 
 
