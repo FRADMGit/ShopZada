@@ -147,7 +147,7 @@ def integrate(table):
             df = df[['Unnamed: 0', 'order_id', 'product_name', 'product_id']]
             df = df.rename(columns={'Unnamed: 0': 'line_id'})
         else:
-            df = df[['line_id', 'order_id', 'price', 'quantity']]
+            df = df[['line_id', 'order_id', 'product_name', 'product_id']]
 
     elif table == "order_with_merchant_data":
         df = df[['order_id', 'merchant_id', 'staff_id']]
