@@ -81,7 +81,7 @@ def read(file):
 
 # Function to integrate (concatenate) multiple files for the same table and save as CSV
 def integrate(table):
-    if len(tables[table]) = 0: # if table is empty
+    if len(tables[table]) == 0: # if table is empty
         colnames = {"user_job":['user_id', 'name', 'job_title', 'job_level'],
                    "user_data":['user_id', 'creation_date', 'name', 'street', 'state', 'city', 'country', 'birthdate', 'gender', 'device_address', 'user_type'],
                     "staff_data":['staff_id', 'name', 'job_level', 'street', 'state', 'city', 'country', 'contact_number', 'creation_date'],
