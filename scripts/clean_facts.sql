@@ -5,7 +5,7 @@
         SELECT
             od.order_id,
             od.user_id,
-            od.order_transaction_date,
+            CAST(od.order_transaction_date AS DATE) AS order_transaction_date,
             od.order_arrival_days,
             odl.order_delay_days,
             msm.merchant_id,
@@ -19,6 +19,7 @@
             cs.staff_pk,
             cs.staff_creation_datetime
         FROM order_data od
+		WHERE od.order_id IS NOT NULL AND order_transaction_date ~ '^\d{8}$'
         
         -- FIX 1: Change these to LEFT JOIN. 
         -- If an order has no delay record or merchant map, we keep the order and fill NULLs.
@@ -80,3 +81,4 @@
         FROM line_item_data_prices
         FULL JOIN line_item_data_products USING(line_id, order_id)
         JOIN clean_product USING(product_id, product_name)
+
