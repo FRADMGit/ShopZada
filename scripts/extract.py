@@ -81,6 +81,26 @@ def read(file):
 
 # Function to integrate (concatenate) multiple files for the same table and save as CSV
 def integrate(table):
+    if len(tables[table]) = 0: # if table is empty
+        colnames = {"user_job":['user_id', 'name', 'job_title', 'job_level'],
+                   "user_data":['user_id', 'creation_date', 'name', 'street', 'state', 'city', 'country', 'birthdate', 'gender', 'device_address', 'user_type'],
+                    "staff_data":['staff_id', 'name', 'job_level', 'street', 'state', 'city', 'country', 'contact_number', 'creation_date'],
+                    "order_data":['order_id', 'user_id', 'estimated arrival', 'transaction_date'],
+                    "order_delays":['order_id', 'delay in days'],
+                    "product_list":['product_id', 'product_name', 'product_type', 'price'],
+                    "merchant_data":['merchant_id', 'creation_date', 'name', 'street', 'state', 'city', 'country', 'contact_number'],
+                    "campaign_data":['campaign_id', 'campaign_name', 'campaign_description', 'discount'],
+                    "user_credit_card":['user_id', 'name', 'credit_card_number', 'issuing_bank'],
+                    "line_item_data_prices":['line_id', 'order_id', 'price', 'quantity'],
+                    "line_item_data_products":['line_id', 'order_id', 'product_name', 'product_id'],
+                    "order_with_merchant_data":['order_id', 'merchant_id', 'staff_id'],
+                    "transactional_campaign_data":['transaction_date', 'campaign_id', 'order_id', 'estimated arrival', 'availed']
+                   }
+        df = pd.DataFrame(columns = colnames[table])
+        csv_path = os.path.join(os.getcwd(), f"{table}.csv")
+        df.to_csv(csv_path, index=False)
+        return
+        
     df = read(tables[table][0])
     if len(tables[table]) > 1:
         for i in range(1, len(tables[table])):
