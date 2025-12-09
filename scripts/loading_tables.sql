@@ -26,7 +26,7 @@ CREATE TABLE order_data (
   order_id VARCHAR(250),
   "user_id" VARCHAR(250),
   order_arrival_days VARCHAR(250),
-  order_transaction_date DATE
+  order_transaction_date VARCHAR(250)
 );
 
 DROP TABLE IF EXISTS staff_data CASCADE;
@@ -109,11 +109,12 @@ CREATE TABLE order_with_merchant_data (
 
 DROP TABLE IF EXISTS transactional_campaign_data CASCADE;
 CREATE TABLE transactional_campaign_data (
-  transaction_date DATE,
+  transaction_date VARCHAR(250),
   campaign_id VARCHAR(250),
   order_id VARCHAR(250),
   "estimated arrival" VARCHAR(250),
   availed NUMERIC
 );
+
 
 
