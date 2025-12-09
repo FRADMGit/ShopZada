@@ -110,8 +110,4 @@
     ORDER BY user_creation_datetime
   )
   SELECT 'USER' || LPAD(CAST((ROW_NUMBER() OVER()) AS TEXT), 5, '0') AS user_pk, * FROM users
-  where user_id IS NOT NULL AND merchant_creation_datetime ~ '^\d{8}$';
-
-
-
-
+  where user_id IS NOT NULL AND user_creation_datetime ~ '^\d{8}$'
